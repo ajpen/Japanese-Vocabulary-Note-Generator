@@ -8,11 +8,15 @@ import csv
 import time
 import traceback
 import uuid
+import multiprocessing
+import multiprocessing.queues
+
 
 
 ANIMATION_PATH = "/Users/anfernee/projects/anki-japanese-note-generator/animations"
 AUDIO_PATH = "/Users/anfernee/projects/anki-japanese-note-generator/audio-mp3"
 ANKI_MEDIA_FOLDER = "/Users/anfernee/Library/Application Support/Anki2/User 1"
+DOWNLOAD_TEMP_FOLDER = "/tmp"
 
 
 if len(sys.argv) < 3:
@@ -77,7 +81,7 @@ def download_audio(word):
     if response.status_code != 200:
         raise ValueError(f"Attempt to download audio for {word} failed.")
 
-    src = os.path.join(os.getcwd(), word_file)
+    src = os.path.join(DOWNLOAD_TEMP_FOLDER, word_file)
 
     with open(src, 'wb') as f:
         f.write(response.content)
@@ -211,7 +215,7 @@ def main():
 
     new_words_f = open(sys.argv[1])
     output_f = open(sys.argv[2], 'w')
-    missing = open(f"{sys.argv[1]}.missing.txt")
+    missing = open(f"{sys.argv[1]}.missing.txt", 'w')
 
     # Write tags first
     if len(sys.argv) > 3:
