@@ -8,14 +8,11 @@ import csv
 import time
 import traceback
 import uuid
-import multiprocessing
-import multiprocessing.queues
-
 
 
 ANIMATION_PATH = "/Users/anfernee/projects/anki-japanese-note-generator/animations"
 AUDIO_PATH = "/Users/anfernee/projects/anki-japanese-note-generator/audio-mp3"
-ANKI_MEDIA_FOLDER = "/Users/anfernee/Library/Application Support/Anki2/User 1"
+ANKI_MEDIA_FOLDER = "/Users/anfernee/Library/Application Support/Anki2/User 1/collection.media"
 DOWNLOAD_TEMP_FOLDER = "/tmp"
 
 
@@ -183,6 +180,9 @@ def generate_card(word):
         print(f"{word} isn't in the dictionary. Maybe its not in dict form?")
 
     else:
+        # If theres no kanji, put kana in kanji's place
+        word_data["kanji"] = word_data["kanji"] or word_data["kana"]
+
         word_data["strokes"] = [import_stroke_order_animation(kanji) for kanji in word]
         word_data["strokes"] = [f"[sound:{x}]" for x in word_data["strokes"] if x is not None]
 
@@ -197,7 +197,7 @@ def generate_card(word):
         word_data["kanji_meaning"] = [f"{x}: {kanjilookup[x]['meaning']}" for x in word if kanjilookup.get(x)]
 
         if word_data["example"]:
-            example = f"\"{word_data['example'][0]}\n{word_data['example'][1]}\"; "
+            example = f"\"{word_data['example'][0]}\n{word_data['example'][1]}\""
         else:
             example = ""
 
