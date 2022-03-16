@@ -162,6 +162,57 @@ def import_stroke_order_animation(kanji):
     return anim_fname
 
 
+def jisho_lookup(word):
+    """
+    Given word, check jisho for the word. If the results match the word,
+    return a dict with the fields:
+    kana: the reading in hiragana
+    kanji: the kanji for the word
+    meanings: list of meanings for the word
+    example (optional): either empty string or a tuple in the form (japanese, english)
+
+    :param word: the word in japanese we're looking up
+    :return: dict with fields kana, kanji, meaning and example (optional)
+    """
+
+    url = f"https://jisho.org/api/v1/search/words?keyword={word}"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/39.0.2171.95 Safari/537.36'}
+
+    # First, we'll download the file to cwd then we'll try to copy to the anki media folder.
+    response = requests.get(url, headers=headers)
+    response_data = response.json()
+
+    match = None
+
+    # We're gonna make a heavy assumption here that the first thing in the results is the correct match.
+    if not response_data or not response_data.get("data"):
+        return None
+
+    for result in response_data["data"]:
+        if result["slug"] == word:
+            match = result
+            break
+
+        for alternate in result["japanese"]:
+            if alternate["word"] == word:
+                match = result
+                break
+        else:
+            continue
+        break
+
+    if not match:
+        return None
+    else:
+        return {
+            "kanji": match["slug"],
+            "kana": match["japanese"][0]["reading"],
+            "meaning": ", ".join([", ".join(x["english_definitions"]) for x in match["senses"]])
+        }
+
+
 def generate_card(word):
     """
     Card is a line of fields separated by semi colons.
@@ -177,7 +228,11 @@ def generate_card(word):
     """
     word_data = jmlookup.get(word)
     if not word_data:
-        print(f"{word} isn't in the dictionary. Maybe its not in dict form?")
+        print(f"{word} not in dictionary. Trying Jisho API...")
+        word_data = jisho_lookup(word)
+
+    if not word_data:
+        print(f"{word} Unable to find word in dictionary or on Jisho. You might need to make this card yourself...")
 
     else:
         # If theres no kanji, put kana in kanji's place
