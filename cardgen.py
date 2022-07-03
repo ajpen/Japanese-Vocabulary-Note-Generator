@@ -239,6 +239,7 @@ def main():
 
     output_f.close()
     new_words_f.close()
+    missing.close()
 
 
 if __name__ == "__main__":
